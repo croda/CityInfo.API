@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CityInfo.API.Models;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace CityInfo.API.Controllers
             return Ok(city.PointsOfInterest);
         }
 
-        [HttpGet("{cityId}/pointsofinterest/{id}")]
+        [HttpGet("{cityId}/pointsofinterest/{id}", Name = "GetPointOfInterest")]
         public IActionResult GetPointOfInterest(int cityId, int id)
         {
             var city = CitiesDataStore.Current.Cities.FirstOrDefault(ct => ct.Id == cityId);
@@ -28,6 +29,36 @@ namespace CityInfo.API.Controllers
             if (pointOfInterest == null) { return NotFound(); }
 
             return Ok(pointOfInterest);
+        }
+
+        [HttpPost("{cityId}/pointsofinterest")]
+        public IActionResult CreatePointOfInterest(int cityId,
+            [FromBody] PointOfInterestCreationDto pointOfInterest)
+        {
+            if (pointOfInterest == null)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (pointOfInterest.Description == pointOfInterest.Name)
+                ModelState.AddModelError("Description", "Fields 'name' and 'description' can't have equal values");
+
+            var city = CitiesDataStore.Current.Cities.FirstOrDefault(ct => ct.Id == cityId);
+            if (city == null) { return NotFound(); }
+
+            var lastPointOfInterestId = CitiesDataStore.Current.Cities.SelectMany(
+                ct => ct.PointsOfInterest).Max(m => m.Id);
+
+            var newPointOfInterest = new PointOfInterestDto()
+            {
+                Id = ++lastPointOfInterestId,
+                Name = pointOfInterest.Name,
+                Description = pointOfInterest.Description
+            };
+
+            return CreatedAtRoute("GetPointOfInterest", new
+            { cityId, id = newPointOfInterest.Id }, newPointOfInterest);
         }
     }
 }
