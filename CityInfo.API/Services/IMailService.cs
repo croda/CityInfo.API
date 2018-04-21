@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CityInfo.API.Services
 {
-    interface IMailService
+    public interface IMailService
     {
         void Send(string subject, string message);
     }

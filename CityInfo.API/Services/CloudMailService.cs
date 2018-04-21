@@ -13,7 +13,7 @@ namespace CityInfo.API.Services
         public void Send(string subject, string message)
         {
             // mock sending mail
-            Debug.WriteLine($"Mail from {_mailFrom} to {_mailTo}, with CloudMail Service)";
+            Debug.WriteLine($"Mail from {_mailFrom} to {_mailTo}, with CloudMail Service");
             Debug.WriteLine($"Subject: {subject}");
             Debug.WriteLine($"Message: {message}");
         }
