@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CityInfo.API.Entities;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -27,7 +29,8 @@ namespace CityInfo.API
             //var builder = new ConfigurationBuilder()
             //    .SetBasePath(env.ContentRootPath)
             //    .AddJsonFile("appSettings.json", optional:false, reloadOnChange:true);
-            //    .AddJsonFile("appSettings.{env.EnvironmentName}.json", optional:true, reloadOnchange:true);
+            //    .AddJsonFile("appSettings.{env.EnvironmentName}.json", optional:true, reloadOnchange:true)
+            //    .AddEnvironmentVariables();
 
             //Configuration = builder.Build();
         }
@@ -54,10 +57,13 @@ namespace CityInfo.API
 
             services.AddTransient<IMailService, CloudMailService()>;
 #endif
+            services.AddDbContext<CityInfoContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("cityInfoDBConnectionString")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
+            CityInfoContext cityInfoContext)
         {
             loggerFactory.AddConsole();
             loggerFactory.AddDebug();
@@ -68,6 +74,13 @@ namespace CityInfo.API
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseDatabaseErrorPage();
+
+                using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    serviceScope.ServiceProvider.GetService<CityInfoContext>().Database.Migrate();
+                    serviceScope.ServiceProvider.GetService<CityInfoContext>().EnsureSeedDataForContext();
+                }
             }
 
             app.UseStatusCodePages();
