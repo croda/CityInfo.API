@@ -55,10 +55,12 @@ namespace CityInfo.API
             services.AddTransient<IMailService, LocalMailService>();
 #else
 
-            services.AddTransient<IMailService, CloudMailService()>;
+            services.AddTransient<IMailService, CloudMailService>();
 #endif
             services.AddDbContext<CityInfoContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("cityInfoDBConnectionString")));
+
+            services.AddScoped<ICityInfoRepository, CityInfoRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -84,6 +86,17 @@ namespace CityInfo.API
             }
 
             app.UseStatusCodePages();
+
+            AutoMapper.Mapper.Initialize(config =>
+            {
+                config.CreateMap<Entities.City, Models.CityWithoutPointsOfInterestDto>();
+                config.CreateMap<Entities.City, Models.CityDto>();
+                config.CreateMap<Entities.PointOfInterest, Models.PointOfInterestDto>();
+                config.CreateMap<Models.PointOfInterestCreationDto, Entities.PointOfInterest>();
+                config.CreateMap<Models.PointOfInterestUpdateDto, Entities.PointOfInterest>();
+                config.CreateMap<Entities.PointOfInterest, Models.PointOfInterestUpdateDto>();
+            });
+
             app.UseMvc();
 
             //app.Run(async (context) =>
